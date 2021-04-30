@@ -9,6 +9,7 @@ using SalesWebMvc.Data;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
+using SalesWebMvc.Services.Exeptions;
 
 namespace SalesWebMvc.Controllers
 {
@@ -40,8 +41,7 @@ namespace SalesWebMvc.Controllers
                 return NotFound();
             }
 
-            var seller = await _context.Seller
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var seller = _selerService.FindById(id.Value);
             if (seller == null)
             {
                 return NotFound();
@@ -73,19 +73,22 @@ namespace SalesWebMvc.Controllers
         }
 
         // GET: Sellers/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        public IActionResult Edit(int? id)
         {
             if (id == null)
             {
                 return NotFound();
             }
-
-            var seller = await _context.Seller.FindAsync(id);
+            
+            var seller = _selerService.FindById(id.Value);
             if (seller == null)
             {
                 return NotFound();
             }
-            return View(seller);
+            
+            var departments = _departmentService.FindAll();
+            var viewModel = new SellerFormViewModel { Departments = departments, Seller = seller };
+            return View(viewModel);
         }
 
         // POST: Sellers/Edit/5
@@ -93,30 +96,26 @@ namespace SalesWebMvc.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Email,BirthDate,BaseSAlary")] Seller seller)
+        public IActionResult Edit(int id,  Seller seller)
         {
             if (id != seller.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(seller);
-                    await _context.SaveChangesAsync();
+                    _selerService.Update(seller);
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (NotFoundExeption)
                 {
-                    if (!SellerExists(seller.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    return NotFound();
+                }
+                catch (DbConcurrencyExeption)
+                {
+                    return BadRequest();
                 }
                 return RedirectToAction(nameof(Index));
             }
@@ -131,8 +130,7 @@ namespace SalesWebMvc.Controllers
                 return NotFound();
             }
 
-            var seller = await _context.Seller
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var seller = _selerService.FindById(id.Value);
             if (seller == null)
             {
                 return NotFound();
@@ -142,13 +140,11 @@ namespace SalesWebMvc.Controllers
         }
 
         // POST: Sellers/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public IActionResult Delete(int id)
         {
-            var seller = await _context.Seller.FindAsync(id);
-            _context.Seller.Remove(seller);
-            await _context.SaveChangesAsync();
+            _selerService.Remove(id);
             return RedirectToAction(nameof(Index));
         }
 
