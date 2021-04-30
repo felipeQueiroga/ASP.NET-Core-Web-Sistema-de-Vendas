@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
 using SalesWebMvc.Models;
+using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
 
 namespace SalesWebMvc.Controllers
@@ -15,11 +16,13 @@ namespace SalesWebMvc.Controllers
     {
         private readonly SalesWebMvcContext _context;
         private readonly SellerService _selerService;
+        private readonly DepartmentService _departmentService;
 
-        public SellersController(SalesWebMvcContext context, SellerService sellerService)
+        public SellersController(SalesWebMvcContext context, SellerService sellerService, DepartmentService departmentService)
         {
             _context = context;
             _selerService = sellerService;
+            _departmentService = departmentService;
         }
 
         // GET: Sellers
@@ -50,7 +53,9 @@ namespace SalesWebMvc.Controllers
         // GET: Sellers/Create
         public IActionResult Create()
         {
-            return View();
+            var departments = _departmentService.FindAll();
+            var viewModel = new SellerFormViewModel { Departments = departments };
+            return View(viewModel);
         }
 
         // POST: Sellers/Create
