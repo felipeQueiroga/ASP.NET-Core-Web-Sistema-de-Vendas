@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using SalesWebMvc.Data;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
 using SalesWebMvc.Services.Exeptions;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SalesWebMvc.Controllers
 {
@@ -38,13 +36,13 @@ namespace SalesWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Id not provided" });
             }
 
             var seller = _selerService.FindById(id.Value);
             if (seller == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Id not found" });
             }
 
             return View(seller);
@@ -77,15 +75,15 @@ namespace SalesWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Id not provided" });
             }
-            
+
             var seller = _selerService.FindById(id.Value);
             if (seller == null)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Id not found" });
             }
-            
+
             var departments = _departmentService.FindAll();
             var viewModel = new SellerFormViewModel { Departments = departments, Seller = seller };
             return View(viewModel);
@@ -96,11 +94,11 @@ namespace SalesWebMvc.Controllers
         // more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id,  Seller seller)
+        public IActionResult Edit(int id, Seller seller)
         {
             if (id != seller.Id)
             {
-                return BadRequest();
+                return RedirectToAction(nameof(Error), new { message = "Id mismatch" });
             }
 
             if (ModelState.IsValid)
@@ -109,14 +107,11 @@ namespace SalesWebMvc.Controllers
                 {
                     _selerService.Update(seller);
                 }
-                catch (NotFoundExeption)
+                catch (ApplicationException e)
                 {
-                    return NotFound();
+                    return RedirectToAction(nameof(Error), new { message = e.Message });
                 }
-                catch (DbConcurrencyExeption)
-                {
-                    return BadRequest();
-                }
+
                 return RedirectToAction(nameof(Index));
             }
             return View(seller);
@@ -152,5 +147,16 @@ namespace SalesWebMvc.Controllers
         {
             return _context.Seller.Any(e => e.Id == id);
         }
+
+        public IActionResult Error(string message)
+        {
+            var vuewModel = new ErrorViewModel
+            {
+                Message = message,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            };
+            return View(vuewModel);
+        }
+
     }
 }
