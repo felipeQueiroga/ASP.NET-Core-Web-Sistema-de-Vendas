@@ -14,19 +14,19 @@ namespace SalesWebMvc.Models
         [DisplayFormat(DataFormatString = "{0:F2}")]
         public double Amount { get; set; }
        
-        public SaleStatus Stataus { get; set; }
+        public SaleStatus Status { get; set; }
         public Seller Seller { get; set; }
 
         public SalesRecord()
         {
         }
 
-        public SalesRecord(int id, DateTime date, double amount, SaleStatus stataus, Seller seller)
+        public SalesRecord(int id, DateTime date, double amount, SaleStatus status, Seller seller)
         {
             Id = id;
             Date = date;
             Amount = amount;
-            Stataus = stataus;
+            Status = status;
             Seller = seller;
         }
     }
