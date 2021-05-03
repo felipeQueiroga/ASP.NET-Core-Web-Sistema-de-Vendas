@@ -3,6 +3,7 @@ using SalesWebMvc.Data;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
+using SalesWebMvc.Services.Exeptions;
 using System;
 using System.Diagnostics;
 using System.Linq;
@@ -64,7 +65,7 @@ namespace SalesWebMvc.Controllers
         {
             if (ModelState.IsValid)
             {
-               await _selerService.InsertAsync(seller);
+                await _selerService.InsertAsync(seller);
             }
             return RedirectToAction(nameof(Index));
         }
@@ -104,7 +105,7 @@ namespace SalesWebMvc.Controllers
             {
                 try
                 {
-                  await  _selerService.UpdateAsync(seller);
+                    await _selerService.UpdateAsync(seller);
                 }
                 catch (ApplicationException e)
                 {
@@ -138,24 +139,31 @@ namespace SalesWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await _selerService.RemoveAsync(id);
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool SellerExists(int id)
-        {
-            return _context.Seller.Any(e => e.Id == id);
-        }
-
-        public IActionResult Error(string message)
-        {
-            var vuewModel = new ErrorViewModel
+            try
             {
-                Message = message,
-                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-            };
-            return View(vuewModel);
+                await _selerService.RemoveAsync(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), new { message = e.Message});
+            }
         }
 
+            private bool SellerExists(int id)
+            {
+                return _context.Seller.Any(e => e.Id == id);
+            }
+
+            public IActionResult Error(string message)
+            {
+                var vuewModel = new ErrorViewModel
+                {
+                    Message = message,
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                };
+                return View(vuewModel);
+            }
+
+        }
     }
-}
